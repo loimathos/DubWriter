@@ -62,7 +62,8 @@ jobs:
           curl -L -o linuxdeployqt.AppImage \
             https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
           chmod +x linuxdeployqt.AppImage
-          QMAKE="$(command -v qmake6 || command -v qmake)" ./linuxdeployqt.AppImage AppDir/usr/bin/DubWriter -appimage
+          QMAKE="$(command -v qmake6 || command -v qmake)" \
+            ./linuxdeployqt.AppImage AppDir/usr/share/applications/dubwriter.desktop -appimage
           mv DubWriter-*.AppImage DubWriter.AppImage
 
       - name: Package Windows zip
