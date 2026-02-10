@@ -1,0 +1,87 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: DubWriter-linux-appimage
+          - os: windows-latest
+            artifact: DubWriter-windows-zip
+          - os: macos-latest
+            artifact: DubWriter-macos-app
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.6.2"
+          cache: true
+
+      - name: Install Linux packaging deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2 patchelf
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Package AppImage
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p AppDir/usr/bin
+          mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          cp build/DubWriter AppDir/usr/bin/
+          printf 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/duL8XoAAAAASUVORK5CYII=' \
+            | base64 -d > AppDir/usr/share/icons/hicolor/256x256/apps/dubwriter.png
+          cat > AppDir/usr/share/applications/dubwriter.desktop << 'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=DubWriter
+          Exec=DubWriter
+          Icon=dubwriter
+          Categories=Utility;TextEditor;
+          EOF
+          curl -L -o linuxdeployqt.AppImage \
+            https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
+          chmod +x linuxdeployqt.AppImage
+          QMAKE="$(command -v qmake6 || command -v qmake)" ./linuxdeployqt.AppImage AppDir/usr/bin/DubWriter -appimage
+          mv DubWriter-*.AppImage DubWriter.AppImage
+
+      - name: Package Windows zip
+        if: runner.os == 'Windows'
+        run: |
+          windeployqt build/Release/DubWriter.exe
+          powershell Compress-Archive -Path build/Release/* -DestinationPath DubWriter-windows.zip
+
+      - name: Package macOS app
+        if: runner.os == 'macOS'
+        run: |
+          macdeployqt build/DubWriter.app
+          ditto -c -k --sequesterRsrc --keepParent build/DubWriter.app DubWriter-macos.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            DubWriter.AppImage
+            DubWriter-windows.zip
+            DubWriter-macos.zip

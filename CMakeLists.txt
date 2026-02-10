@@ -41,7 +41,7 @@ target_include_directories(DubWriterUI PUBLIC
 )
 
 # Main application
-add_executable(DubWriter
+add_executable(DubWriter MACOSX_BUNDLE
     src/main.cpp
 )
 
