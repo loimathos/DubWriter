@@ -52,3 +52,16 @@ compile_commands.json
 *creator.user*
 
 *_qmlcache.qrc
+
+# Build directories
+build/
+build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+_codeql_build_dir/
+_codeql_detected_source_root
+
+# Executables
+DubWriter
+DubWriter.exe
