@@ -42,10 +42,7 @@ bool DocumentModel::saveToFile(const QString &filePath) const
     
     QTextStream out(&file);
     for (int i = 0; i < m_lines.size(); ++i) {
-        out << m_lines.at(i);
-        if (i < m_lines.size() - 1) {
-            out << "\n";
-        }
+        out << m_lines.at(i) << "\n";
     }
     
     file.close();
